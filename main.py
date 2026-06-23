@@ -1,7 +1,7 @@
 import csv
 import os
 import sys
-from data_structures import LinkedList, Stack
+from data_structures import LinkedList, Stack, BinarySearchTree, Queue
 
 # File CSV Database
 CSV_FILE = 'inventory.csv'
@@ -10,6 +10,7 @@ CSV_HEADERS = ['ID_Barang', 'Nama_Barang', 'Kategori', 'Jumlah', 'Harga']
 # Inisialisasi Struktur Data Utama
 inventory_list = LinkedList()
 undo_stack = Stack()
+order_queue = Queue()
 
 def load_data():
     """Membaca data dari CSV dan memasukkannya ke Linked List"""
@@ -50,7 +51,9 @@ def display_menu():
     print("5. Cari Barang")
     print("6. Urutkan Barang")
     print("7. Undo Hapus Barang")
-    print("8. Simpan & Keluar")
+    print("8. Statistik Harga")
+    print("9. Kelola Antrean Pesanan")
+    print("10. Simpan & Keluar")
     print("="*45)
 
 def print_items(items):
@@ -70,7 +73,7 @@ def main():
     
     while True:
         display_menu()
-        choice = input("Pilih menu (1-8): ")
+        choice = input("Pilih menu (1-10): ")
         
         if choice == '1':
             clear_screen()
@@ -98,7 +101,8 @@ def main():
             while True:
                 try:
                     jumlah = int(input("Jumlah (Stok): "))
-                    if jumlah < 0: raise ValueError
+                    if jumlah < 0:
+                        raise ValueError
                     break
                 except ValueError:
                     print("[!] Jumlah harus berupa angka bulat positif.")
@@ -106,7 +110,8 @@ def main():
             while True:
                 try:
                     harga = float(input("Harga (Rp): "))
-                    if harga < 0: raise ValueError
+                    if harga < 0:
+                        raise ValueError
                     break
                 except ValueError:
                     print("[!] Harga harus berupa angka positif.")
@@ -165,7 +170,7 @@ def main():
                 # Push ke stack untuk fitur undo
                 undo_stack.push(deleted_item)
                 print(f"[-] Barang '{deleted_item['Nama_Barang']}' berhasil dihapus.")
-                print(f"[i] Gunakan fitur 'Undo' (menu 7) jika ingin mengembalikan data ini.")
+                print("[i] Gunakan fitur 'Undo' (menu 7) jika ingin mengembalikan data ini.")
             else:
                 print(f"[!] Barang dengan ID '{id_barang}' tidak ditemukan.")
                 
@@ -226,6 +231,84 @@ def main():
                     print(f"[+] Barang '{restored_item['Nama_Barang']}' berhasil dikembalikan ke dalam list!")
                     
         elif choice == '8':
+            clear_screen()
+            print(">>> STATISTIK HARGA BARANG <<<")
+            items = inventory_list.get_all()
+            if not items:
+                print("[!] Data barang kosong.")
+            else:
+                bst = BinarySearchTree()
+                for item in items:
+                    bst.insert(item)
+                
+                termurah = bst.get_min()
+                termahal = bst.get_max()
+                
+                print(f"[*] Barang Termurah: {termurah['Nama_Barang']} (Rp {float(termurah['Harga']):,.2f})")
+                print(f"[*] Barang Termahal: {termahal['Nama_Barang']} (Rp {float(termahal['Harga']):,.2f})")
+                print("\n(Pencarian ini sangat cepat dengan O(log N) menggunakan struktur data Tree)")
+                
+        elif choice == '9':
+            clear_screen()
+            print(">>> KELOLA ANTREAN PESANAN KELUAR <<<")
+            print("1. Tambah Antrean Pesanan (Enqueue)")
+            print("2. Proses Antrean Terdepan (Dequeue)")
+            print("3. Lihat Daftar Antrean")
+            sub_choice = input("Pilih aksi (1-3): ").strip()
+            
+            if sub_choice == '1':
+                id_barang = input("Masukkan ID Barang yang dipesan: ").strip()
+                item = inventory_list.find_by_id(id_barang)
+                if not item:
+                    print(f"[!] Barang dengan ID '{id_barang}' tidak ditemukan di Gudang.")
+                else:
+                    try:
+                        qty = int(input(f"Jumlah '{item['Nama_Barang']}' yang dipesan: "))
+                        if qty <= 0:
+                            print("[!] Jumlah harus lebih dari 0.")
+                        elif qty > item['Jumlah']:
+                            print(f"[!] Stok tidak cukup! Stok saat ini hanya {item['Jumlah']}.")
+                        else:
+                            pesanan = {
+                                'ID_Barang': id_barang,
+                                'Nama_Barang': item['Nama_Barang'],
+                                'Jumlah_Pesan': qty
+                            }
+                            order_queue.enqueue(pesanan)
+                            print(f"[+] Pesanan '{item['Nama_Barang']}' sebanyak {qty} berhasil masuk barisan antrean!")
+                    except ValueError:
+                        print("[!] Input jumlah harus berupa angka.")
+                        
+            elif sub_choice == '2':
+                if order_queue.is_empty():
+                    print("[!] Antrean kosong. Tidak ada pesanan yang perlu diproses.")
+                else:
+                    pesanan = order_queue.dequeue()
+                    item = inventory_list.find_by_id(pesanan['ID_Barang'])
+                    if item:
+                        if item['Jumlah'] >= pesanan['Jumlah_Pesan']:
+                            item['Jumlah'] -= pesanan['Jumlah_Pesan']
+                            inventory_list.update_by_id(pesanan['ID_Barang'], item)
+                            print("[+] Memproses Antrean Paling Depan... Berhasil!")
+                            print(f"[-] Stok '{item['Nama_Barang']}' telah dikurangi sebanyak {pesanan['Jumlah_Pesan']}.")
+                            print(f"    Sisa stok sekarang: {item['Jumlah']}")
+                        else:
+                            print(f"[!] Gagal memproses: Stok '{item['Nama_Barang']}' tidak cukup (Stok: {item['Jumlah']}, Pesanan: {pesanan['Jumlah_Pesan']}).")
+                            print("[!] Pesanan terpaksa dibatalkan dan dikeluarkan dari antrean.")
+                    else:
+                        print(f"[!] Barang ID '{pesanan['ID_Barang']}' sudah tidak ada di database.")
+                        
+            elif sub_choice == '3':
+                if order_queue.is_empty():
+                    print("[!] Antrean saat ini kosong.")
+                else:
+                    print("\nDaftar Antrean Saat Ini (Dari terdepan hingga ke belakang):")
+                    for idx, p in enumerate(order_queue.get_all(), 1):
+                        print(f"  {idx}. [ID: {p['ID_Barang']}] {p['Nama_Barang']} - {p['Jumlah_Pesan']} unit")
+            else:
+                print("[!] Pilihan tidak valid.")
+
+        elif choice == '10':
             print("\nMenyimpan data ke database...")
             save_data()
             print("Data berhasil disimpan. Keluar dari aplikasi. Sampai jumpa!")

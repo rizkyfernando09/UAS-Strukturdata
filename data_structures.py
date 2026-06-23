@@ -132,3 +132,74 @@ class Stack:
         
     def size(self):
         return len(self.items)
+
+class Queue:
+    def __init__(self):
+        self.items = []
+
+    def is_empty(self):
+        return len(self.items) == 0
+
+    # Menambahkan data ke baris paling belakang antrean
+    def enqueue(self, item):
+        self.items.append(item)
+
+    # Mengambil data dari baris paling depan (FIFO)
+    def dequeue(self):
+        if not self.is_empty():
+            return self.items.pop(0)
+        return None
+
+    def get_all(self):
+        return self.items
+
+class TreeNode:
+    def __init__(self, item_data):
+        self.data = item_data
+        self.left = None
+        self.right = None
+
+class BinarySearchTree:
+    def __init__(self):
+        self.root = None
+
+    def insert(self, item_data):
+        if self.root is None:
+            self.root = TreeNode(item_data)
+        else:
+            self._insert_recursive(self.root, item_data)
+
+    def _insert_recursive(self, node, item_data):
+        # Kita urutkan berdasarkan Harga
+        harga_baru = float(item_data['Harga'])
+        harga_node = float(node.data['Harga'])
+        
+        if harga_baru < harga_node:
+            if node.left is None:
+                node.left = TreeNode(item_data)
+            else:
+                self._insert_recursive(node.left, item_data)
+        else:
+            # Jika harga sama atau lebih besar, ke kanan
+            if node.right is None:
+                node.right = TreeNode(item_data)
+            else:
+                self._insert_recursive(node.right, item_data)
+
+    def get_min(self):
+        """Mendapatkan barang dengan harga termurah (Node paling kiri)"""
+        if self.root is None:
+            return None
+        current = self.root
+        while current.left is not None:
+            current = current.left
+        return current.data
+
+    def get_max(self):
+        """Mendapatkan barang dengan harga termahal (Node paling kanan)"""
+        if self.root is None:
+            return None
+        current = self.root
+        while current.right is not None:
+            current = current.right
+        return current.data
