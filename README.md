@@ -1,4 +1,4 @@
-# 📦 Sistem Inventori Gudang (UAS Struktur Data)
+0sc   0s 0scn  # 📦 Sistem Inventori Gudang (UAS Struktur Data)
 
 Sistem Inventori Gudang adalah sebuah aplikasi manajemen barang berbasis *Command Line Interface* (CLI) yang dibangun menggunakan bahasa pemrograman Python. Proyek ini dibuat untuk memenuhi tugas Ujian Akhir Semester (UAS) mata kuliah Struktur Data.
 
